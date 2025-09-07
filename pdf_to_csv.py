@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import tabula
 import pandas as pd
+import json
+import os
 
 # Read PDF file
 print("Reading PDF file...")
@@ -68,7 +70,32 @@ if len(dfs) > 0:
     # Save to CSV
     data_df.to_csv('raw/list.csv', index=False, encoding='utf-8-sig')
     
-    print(f"\nSuccessfully converted PDF to CSV")
+    # Generate JSON file for web application
+    # Replace NaN with empty strings for JSON
+    json_df = data_df.fillna('')
+    
+    # Convert to list of dictionaries
+    json_data = json_df.to_dict('records')
+    
+    # Create JSON directory if it doesn't exist
+    json_dir = 'docs/json'
+    if not os.path.exists(json_dir):
+        os.makedirs(json_dir)
+    
+    # Save to JSON file
+    json_path = os.path.join(json_dir, 'service_learning_organizations.json')
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, ensure_ascii=False, indent=2)
+    
+    # Also generate JavaScript data file for backward compatibility
+    js_content = 'const serviceData = ' + json.dumps(json_data, ensure_ascii=False, indent=2) + ';'
+    with open('docs/data.js', 'w', encoding='utf-8') as f:
+        f.write(js_content)
+    
+    print(f"\nSuccessfully converted PDF to multiple formats:")
+    print(f"  - CSV: raw/list.csv")
+    print(f"  - JSON: {json_path}")
+    print(f"  - JavaScript: docs/data.js")
     print(f"Total data rows: {len(data_df)}")
     print(f"Removed {duplicate_count} duplicate header rows")
     print(f"Columns: {list(data_df.columns)}")
